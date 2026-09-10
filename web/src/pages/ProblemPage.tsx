@@ -4,7 +4,7 @@ import { api } from '../api/client';
 import { HeatTable } from '../components/HeatTable';
 import { ErrorState, Loading } from '../components/States';
 import { TitleBlock } from '../components/TitleBlock';
-import { bandTone, formatDateTime, toneText } from '../lib/format';
+import { bandTone, formatDateTime, formatDuration, toneText } from '../lib/format';
 
 export function ProblemPage() {
   const { problemId = '' } = useParams();
@@ -42,7 +42,7 @@ export function ProblemPage() {
 
       <div className="grid gap-10 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <section>
-          <h1 className="text-[2.25rem]">{brief.data.summary}</h1>
+          <h1 className="text-[2rem]">{brief.data.summary}</h1>
           <p className="mt-4 max-w-[65ch] text-lg text-ink-soft">{brief.data.context}</p>
           <p className="mt-4 text-sm text-ink-soft">Concepts this problem exercises: {brief.data.focusConcepts.join(', ')}.</p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -76,7 +76,7 @@ export function ProblemPage() {
                     <p className="font-semibold">Attempt #{item.number}</p>
                     <p className="text-sm text-ink-soft">
                       {item.curveballTitle ? `Curveball: ${item.curveballTitle}` : 'Designing'}
-                      {item.durationMinutes !== null && `, ${item.durationMinutes} min`}
+                      {item.durationMinutes !== null && `, ${formatDuration(item.durationMinutes)}`}
                     </p>
                     <p className="text-xs text-ink-faint">Started {formatDateTime(item.startedAt)}</p>
                   </div>

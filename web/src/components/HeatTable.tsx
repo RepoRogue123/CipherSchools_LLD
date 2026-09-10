@@ -8,7 +8,7 @@ export function HeatTable({ history, rubric }: { history: AttemptHistoryItemDto[
   if (evaluated.length === 0) return null;
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[32rem] border-collapse text-sm">
+      <table className="w-auto min-w-[22rem] border-collapse text-sm">
         <caption className="sr-only">Scores by criterion for each evaluated attempt</caption>
         <thead>
           <tr>

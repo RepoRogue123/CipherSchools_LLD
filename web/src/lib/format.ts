@@ -6,6 +6,10 @@ const dateTime = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'sh
 export const formatTime = (iso: string) => time.format(new Date(iso));
 export const formatDateTime = (iso: string) => dateTime.format(new Date(iso));
 
+export function formatDuration(minutes: number): string {
+  return minutes < 1 ? 'under a minute' : `${minutes} min`;
+}
+
 export function formatMean(mean: number | null): string {
   return mean === null ? '–' : mean.toFixed(mean % 1 === 0 ? 0 : 2);
 }

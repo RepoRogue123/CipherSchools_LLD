@@ -1,5 +1,27 @@
 import type { DesignDocument, FeedbackReport } from '@designloop/shared';
 import type { ProblemData } from '../../src/domain/problem';
+import { Rubric } from '../../src/domain/rubric';
+
+/** A four-criterion rubric with literal labels, for tests that need hand-checkable expectations. */
+export function aRubric(): Rubric {
+  const levels = { '1': 'one', '2': 'two', '3': 'three', '4': 'four' };
+  return new Rubric(
+    'test-rubric',
+    'v1',
+    [
+      { score: 1, label: 'Missing' },
+      { score: 2, label: 'Emerging' },
+      { score: 3, label: 'Solid' },
+      { score: 4, label: 'Strong' },
+    ],
+    [
+      { id: 'requirements', name: 'Requirement understanding', question: 'Q1?', levels },
+      { id: 'responsibilities', name: 'Class responsibilities', question: 'Q2?', levels },
+      { id: 'tradeoffs', name: 'Explanation & trade-offs', question: 'Q3?', levels },
+      { id: 'robustness', name: 'Edge cases & testability', question: 'Q4?', levels },
+    ],
+  );
+}
 
 /** A small but complete Parking Lot design: passes every blocker check. */
 export function aDesign(): DesignDocument {

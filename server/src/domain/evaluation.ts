@@ -137,6 +137,13 @@ export class Evaluation {
     this.touch();
   }
 
+  /** Heartbeat from the worker that owns the run. */
+  extendLease(now: Date, leaseMs: number): void {
+    this.assertEvaluating('extend the lease of');
+    this.state.leaseUntil = addMs(now, leaseMs);
+    this.touch();
+  }
+
   complete(report: FeedbackReport, now: Date): void {
     this.assertEvaluating('complete');
     this.state.status = 'COMPLETED';

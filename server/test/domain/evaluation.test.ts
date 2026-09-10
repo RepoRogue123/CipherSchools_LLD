@@ -143,4 +143,17 @@ describe('Evaluation lease recovery', () => {
     expect(evaluation.status).toBe('QUEUED');
     expect(evaluation.isClaimable(at(121))).toBe(true);
   });
+
+  test('a live worker extends its lease so slow AI calls are not mistaken for a crash', () => {
+    const evaluation = claimed();
+
+    evaluation.extendLease(at(100), LEASE_MS);
+
+    expect(evaluation.leaseUntil).toEqual(at(220));
+    expect(evaluation.recoverExpiredLease(at(150))).toBe(false);
+  });
+
+  test('only a running evaluation can extend its lease', () => {
+    expect(() => queued().extendLease(T0, LEASE_MS)).toThrow(InvalidStateTransition);
+  });
 });

@@ -8,8 +8,11 @@ import type { Rubric } from '../../src/domain/rubric';
  */
 export class FakeLlmClient implements LlmClient {
   readonly requests: LlmRequest[] = [];
+  private readonly replies: unknown[];
 
-  constructor(private readonly replies: Array<unknown>) {}
+  constructor(replies: readonly unknown[]) {
+    this.replies = [...replies];
+  }
 
   async completeJson<T>(request: LlmRequest, schema: z.ZodType<T>): Promise<LlmResult<T>> {
     this.requests.push(request);

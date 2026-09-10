@@ -153,6 +153,15 @@ describe('OpenAiCompatibleClient error classification', () => {
     expect(error.retryable).toBe(retryable);
   });
 
+  test('a 400 that rejects the API key (Gemini’s style) is an auth error, not a bad request', async () => {
+    const body = JSON.stringify([{ error: { code: 400, message: 'Please pass a valid API key', status: 'INVALID_ARGUMENT' } }]);
+    const { fetchFn } = fakeFetch(httpError(400, body));
+
+    const error = await capture(new OpenAiCompatibleClient(config, fetchFn).completeJson(request, schema));
+
+    expect(error.kind).toBe('auth');
+  });
+
   test('reads the retry delay from a Retry-After header', async () => {
     const { fetchFn } = fakeFetch(httpError(429, '{}', { 'retry-after': '12' }));
 

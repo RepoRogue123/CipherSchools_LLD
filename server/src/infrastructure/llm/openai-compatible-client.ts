@@ -122,7 +122,10 @@ export class OpenAiCompatibleClient implements LlmClient {
         retryAfterMs: retryAfterMs(response.headers.get('retry-after'), raw),
       });
     }
-    if (status === 401 || status === 403) return new LlmError('auth', `${prefix}: check the API key`);
+    // Gemini rejects a bad key with 400 INVALID_ARGUMENT rather than 401.
+    if (status === 401 || status === 403 || (status === 400 && /api[\s_-]?key/i.test(raw))) {
+      return new LlmError('auth', `${prefix}: check the API key`);
+    }
     if (status === 408) return new LlmError('timeout', `${prefix}: request timeout`);
     if (status >= 500) return new LlmError('server', `${prefix}: ${detail}`);
     return new LlmError('bad_request', `${prefix}: ${detail}`);

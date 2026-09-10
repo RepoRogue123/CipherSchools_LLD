@@ -1,4 +1,5 @@
 import type { LearnerDto } from '@designloop/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useContext, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { ApiError, api, setLearnerId } from './api/client';
 
@@ -36,6 +37,7 @@ function storeId(id: string | null): void {
 
 /** Resolves who is practising before rendering the app; asks for a name the first time. */
 export function LearnerGate({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [learner, setLearner] = useState<LearnerDto | null>(null);
   const [checking, setChecking] = useState(true);
 
@@ -77,6 +79,8 @@ export function LearnerGate({ children }: { children: ReactNode }) {
         switchLearner: () => {
           storeId(null);
           setLearnerId(null);
+          // Drop the previous learner's cached attempts and progress.
+          queryClient.clear();
           setLearner(null);
         },
       }}

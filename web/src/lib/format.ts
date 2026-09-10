@@ -71,6 +71,11 @@ export function bandTone(band: string | null): Tone {
   }
 }
 
+/** Row ids for the editor. randomUUID only exists in secure contexts, so fall back when served over plain HTTP. */
 export function newId(prefix: string): string {
-  return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+  const random =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID().slice(0, 8)
+      : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  return `${prefix}-${random}`;
 }

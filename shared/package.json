@@ -1,0 +1,16 @@
+{
+  "name": "@designloop/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API contract shared by server and web: Zod schemas, enums and DTO types.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^4.6.1"
+  }
+}

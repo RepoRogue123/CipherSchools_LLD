@@ -34,8 +34,9 @@ const fixtureSchema = z.object({
   changeImpact: changeImpactSchema,
 });
 
+/** Loads an example design from content/examples as an immutable submission. */
 export function loadFixture(name: string) {
-  const file = path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), 'fixtures', name);
+  const file = path.join(loadConfig().contentDir, 'examples', name);
   const fixture = fixtureSchema.parse(JSON.parse(readFileSync(file, 'utf8')));
   const submission = Submission.create({
     id: `fixture-${fixture.label}`,

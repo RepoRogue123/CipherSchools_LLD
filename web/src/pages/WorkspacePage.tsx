@@ -17,6 +17,7 @@ import {
 import { Section } from '../components/editor/Section';
 import { ErrorState, Loading } from '../components/States';
 import { TitleBlock } from '../components/TitleBlock';
+import { exampleFor } from '../lib/examples';
 import { formatTime, newId } from '../lib/format';
 import { sectionStatus, type SectionId } from '../lib/sections';
 import { useAttemptEditor, type SaveState } from '../lib/useAttemptEditor';
@@ -126,6 +127,7 @@ function Workspace({ initial, brief }: { initial: AttemptDto; brief: ProblemBrie
 
   const status = (section: SectionId) => sectionStatus(findings, section);
   const sectionProps = { design, update: editor.updateDesign, locked };
+  const example = exampleFor(brief.id);
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 pb-36 sm:px-6">
@@ -151,6 +153,24 @@ function Workspace({ initial, brief }: { initial: AttemptDto; brief: ProblemBrie
         </aside>
 
         <main className="min-w-0 rounded-md border border-rule bg-sheet px-4 sm:px-6">
+          {example && (
+            <p className="mt-4 flex flex-wrap items-center gap-3 rounded-md border border-dashed border-amber bg-amber-wash px-3 py-2 text-sm text-amber">
+              Demo mode: load a complete sample design to try the loop quickly.
+              {!locked ? (
+                <button type="button" className="btn btn-secondary" onClick={() => editor.updateDesign(() => example.design)}>
+                  Load the sample design
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => editor.updateChangeImpact(() => example.changeImpact)}
+                >
+                  Load the sample change impact
+                </button>
+              )}
+            </p>
+          )}
           <Section id="assumptions" number={1} title="Assumptions & scope" hint={HINTS.assumptions} status={status('assumptions')} locked={locked}>
             <AssumptionsEditor {...sectionProps} />
           </Section>

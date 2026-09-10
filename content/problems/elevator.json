@@ -1,0 +1,73 @@
+{
+  "id": "elevator",
+  "version": 1,
+  "title": "Elevator System",
+  "difficulty": "hard",
+  "estimatedMinutes": 45,
+  "summary": "Control a bank of elevators: accept calls, dispatch cars, and move them safely between floors.",
+  "context": "A 20-floor office tower has four elevators. People press up or down buttons on each floor and choose destination floors inside the car. The building manager wants efficient dispatching during rush hour, and safe behaviour when a car is overloaded or taken out for maintenance.",
+  "focusConcepts": ["State", "Strategy", "Separation of concerns"],
+  "requirements": [
+    { "id": "R1", "text": "The building has N floors and M elevator cars." },
+    { "id": "R2", "text": "Both hall calls (up or down buttons on a floor) and car calls (floor buttons inside a car) are supported." },
+    { "id": "R3", "text": "A dispatcher assigns each hall call to one car." },
+    { "id": "R4", "text": "Each car moves floor by floor, stops at requested floors in its direction of travel, and opens and closes its doors." },
+    { "id": "R5", "text": "Every floor and car displays each car's current floor and direction." },
+    { "id": "R6", "text": "A car that exceeds its weight limit stays at the floor with its doors open until the load is reduced." },
+    { "id": "R7", "text": "An operator can put a car into maintenance. It finishes its current stop and then stops accepting calls." }
+  ],
+  "outOfScope": [
+    "Motor control and physical safety systems",
+    "Access control and card readers",
+    "Energy optimisation",
+    "User interface design"
+  ],
+  "clarifyingQuestions": [
+    { "question": "How should the dispatcher choose a car?", "answer": "Start simple, for example the nearest car that is idle or already moving in the right direction. The building wants to try smarter algorithms later." },
+    { "question": "Does a car serve calls in the opposite direction on the way?", "answer": "No. A car keeps serving requests in its current direction before reversing." },
+    { "question": "Do we need to simulate time?", "answer": "No real-time simulation is needed. Describe how a car advances step by step, for example on a tick or a floor-reached event." },
+    { "question": "What happens to hall calls assigned to a car that goes into maintenance?", "answer": "They must be reassigned to other cars." }
+  ],
+  "keyFlows": ["A hall call is dispatched and served", "A car enters maintenance"],
+  "designPressures": [
+    "Dispatch (which car serves a call, a global decision) is separate from car control (how one car moves, a local decision). Mixing them creates a god controller.",
+    "The dispatching algorithm is the most likely thing to change and should be a pluggable strategy.",
+    "A car's behaviour depends on its state (idle, moving, doors open, overloaded, maintenance), so state rules should be explicit.",
+    "Requests arrive concurrently while cars move, so request queues need a clear owner."
+  ],
+  "edgeCases": [
+    "A call for the floor the car is already on.",
+    "Every car is in maintenance.",
+    "Overload while the car still has pending stops.",
+    "A car goes into maintenance with hall calls assigned to it.",
+    "The doors are obstructed while closing."
+  ],
+  "curveballs": [
+    {
+      "id": "el-fire-mode",
+      "title": "Fire emergency mode",
+      "description": "When the fire alarm triggers, every car must cancel all calls, travel to the ground floor without stopping, open its doors and stay out of service until an operator resets the system. Hall and car buttons are ignored during the emergency.",
+      "tests": "Whether car state and the dispatcher can be switched into a global override mode without scattering emergency checks everywhere."
+    },
+    {
+      "id": "el-destination-dispatch",
+      "title": "Destination dispatch",
+      "description": "The lobby gets a kiosk. Passengers enter their destination floor before boarding and are told which car to take, so cars leaving the lobby know their stops in advance. Floors above the lobby keep their normal buttons.",
+      "tests": "Whether the dispatching strategy and request model are open enough to support a new kind of request and a different assignment algorithm."
+    }
+  ],
+  "alternativeApproaches": [
+    {
+      "name": "State pattern per car with a dispatch strategy",
+      "summary": "Each ElevatorCar delegates to a CarState (Idle, Moving, DoorsOpen, Maintenance). A Dispatcher uses a DispatchStrategy to assign hall calls, and each car owns its own stop queue.",
+      "strengths": "Car rules are explicit per state, and dispatching algorithms are swappable and testable.",
+      "tradeoffs": "More classes, and state transitions triggered by events need careful ownership."
+    },
+    {
+      "name": "Central controller with a scheduling table",
+      "summary": "One ElevatorController holds every car's state in a table and runs a scheduling loop (for example SCAN or LOOK) that decides each car's next move on every tick.",
+      "strengths": "Global optimisation is easier, with one place to reason about the whole bank.",
+      "tradeoffs": "The controller grows large and hard to extend, and per-car behaviour is harder to test in isolation."
+    }
+  ]
+}

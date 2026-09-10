@@ -1,0 +1,73 @@
+{
+  "id": "vending-machine",
+  "version": 1,
+  "title": "Vending Machine",
+  "difficulty": "easy",
+  "estimatedMinutes": 30,
+  "summary": "A snack machine that takes coins, dispenses products and returns change, and has to behave correctly in every state.",
+  "context": "An office wants software for its snack vending machines. Each machine has numbered slots that each hold one product type. It accepts coins and notes, and an operator restocks it once a day. Customers are impatient: they press buttons in any order, cancel halfway through, and expect their money back if anything goes wrong.",
+  "focusConcepts": ["State", "Encapsulation", "Single responsibility"],
+  "requirements": [
+    { "id": "R1", "text": "The machine has slots; each slot holds one product with a price and a quantity." },
+    { "id": "R2", "text": "A customer inserts coins or notes of supported denominations (₹1, ₹2, ₹5, ₹10, ₹20, ₹50, ₹100), and the running balance is shown." },
+    { "id": "R3", "text": "A customer selects a slot; the product is dispensed only if it is in stock and the balance covers the price." },
+    { "id": "R4", "text": "After dispensing, change is returned using the coins available in the machine. If exact change is impossible, the sale is refused before dispensing." },
+    { "id": "R5", "text": "A customer can cancel at any time before dispensing and receive a full refund." },
+    { "id": "R6", "text": "An operator can restock products, refill change coins and collect cash." },
+    { "id": "R7", "text": "Actions that don't make sense in the current state (for example, selecting a product before inserting money) are rejected with a clear message." }
+  ],
+  "outOfScope": [
+    "Card, UPI or any networked payments",
+    "Hardware drivers and physical sensors",
+    "Multiple machines or a central server",
+    "Operator authentication"
+  ],
+  "clarifyingQuestions": [
+    { "question": "Can a customer buy several products with one balance?", "answer": "No. Each sale is one product, and any leftover balance is returned as change." },
+    { "question": "What happens if the machine cannot make exact change?", "answer": "Refuse the sale before dispensing, tell the customer, and keep their balance so they can pick something else or cancel." },
+    { "question": "Do notes have to be refunded as the same notes?", "answer": "No. Refunds and change can use any coins the machine holds." },
+    { "question": "Can dispensing fail after the customer has paid?", "answer": "Yes, assume the mechanism can jam. If it does, the customer must be refunded." }
+  ],
+  "keyFlows": ["Buy a product and receive change", "Cancel and refund"],
+  "designPressures": [
+    "Behaviour depends on the machine's state (idle, has balance, dispensing, out of service). Good designs reject illegal actions per state in one place instead of scattering if-checks.",
+    "Change-making is an algorithm over the coin inventory and should be isolated from product inventory and from the state logic.",
+    "Payment methods are likely to grow (cards, UPI), so money handling should sit behind an abstraction rather than being hard-wired into the machine.",
+    "Money should be represented precisely (integer paise or a Money value object), never as floating point."
+  ],
+  "edgeCases": [
+    "Exact change is not available for the selected product.",
+    "The product sells out between selection and dispensing.",
+    "The customer cancels after inserting money.",
+    "Dispensing jams after the balance has been deducted.",
+    "An unsupported or counterfeit coin is inserted."
+  ],
+  "curveballs": [
+    {
+      "id": "vm-cards",
+      "title": "Card and UPI payments",
+      "description": "The machine must now also accept card and UPI payments. A card or UPI payment is first authorised for the product price. It is captured only after the product is dispensed successfully, and the authorisation is voided if dispensing fails. Coins must keep working exactly as before.",
+      "tests": "Whether payment was abstracted behind an interface, and whether the state flow can take an authorise/capture/void lifecycle without rewriting coin handling."
+    },
+    {
+      "id": "vm-promotions",
+      "title": "Promotions engine",
+      "description": "Marketing wants promotions: 'buy 2, get 1 free' on selected slots within one session, and time-based discounts such as 20% off all drinks after 8 pm. Promotions can be combined, up to a maximum discount of 40%.",
+      "tests": "Whether pricing is separated from product and sale logic, so new rules can be added without editing the machine's core."
+    }
+  ],
+  "alternativeApproaches": [
+    {
+      "name": "State pattern with a payment abstraction",
+      "summary": "Each machine state (Idle, HasBalance, Dispensing, OutOfService) is a class implementing the same actions, and the machine delegates to its current state. Coin handling sits behind a PaymentMethod interface; change-making lives in a ChangeMaker.",
+      "strengths": "Illegal actions are handled per state in one place, and new states or payment methods are additive.",
+      "tradeoffs": "More classes. For three or four simple states it can feel heavier than necessary."
+    },
+    {
+      "name": "State enum with a transition table",
+      "summary": "The machine holds a MachineState enum and a table of allowed actions per state; guard methods reject illegal transitions. Inventory, CoinVault and ChangeMaker are separate collaborators.",
+      "strengths": "Compact and easy to read when states have little behaviour of their own.",
+      "tradeoffs": "As per-state behaviour grows, logic concentrates in the machine class and switch statements spread."
+    }
+  ]
+}

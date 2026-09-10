@@ -1,0 +1,100 @@
+{
+  "id": "lld-core",
+  "version": "v1",
+  "scale": [
+    { "score": 1, "label": "Missing" },
+    { "score": 2, "label": "Emerging" },
+    { "score": 3, "label": "Solid" },
+    { "score": 4, "label": "Strong" }
+  ],
+  "criteria": [
+    {
+      "id": "requirements",
+      "name": "Requirement understanding",
+      "question": "Does the design cover what was asked, with explicit and sensible assumptions?",
+      "levels": {
+        "1": "Most requirements are unaddressed or misread, and no assumptions are stated.",
+        "2": "The main flow is covered, but several requirements or constraints are missing and ambiguities are left open.",
+        "3": "Every requirement is traced to part of the design, and key ambiguities are resolved with explicit assumptions.",
+        "4": "Everything in Solid, plus deliberate scoping (what is out and why) and attention to non-functional concerns such as concurrency or consistency."
+      }
+    },
+    {
+      "id": "responsibilities",
+      "name": "Class responsibilities",
+      "question": "Does each class own one clear job, with behaviour placed next to the data it uses?",
+      "levels": {
+        "1": "Classes are data holders only, or one class does most of the work.",
+        "2": "Most classes are sensible, but some mix unrelated concerns or business rules live in the wrong place.",
+        "3": "Each class has a single, clear reason to change, and rules live with the data they govern.",
+        "4": "Responsibilities are crisp and well named, there are no god or anaemic classes, and they hold up across every key flow."
+      }
+    },
+    {
+      "id": "coupling",
+      "name": "Coupling & cohesion",
+      "question": "Do classes depend on as little as possible, and on stable things?",
+      "levels": {
+        "1": "Everything talks to everything, with circular or hub dependencies.",
+        "2": "There are some unnecessary dependencies on concrete classes or on other classes' internals.",
+        "3": "Dependencies are purposeful and point to abstractions where change is expected.",
+        "4": "Dependencies are minimal and one-directional; components could be tested or replaced in isolation."
+      }
+    },
+    {
+      "id": "encapsulation",
+      "name": "Encapsulation & interfaces",
+      "question": "Is state protected, and do methods express meaningful operations rather than raw data access?",
+      "levels": {
+        "1": "Mutable state is public and callers manipulate internals directly.",
+        "2": "Getters and setters expose internals, and callers are responsible for keeping objects valid.",
+        "3": "Objects guard their own invariants through intention-revealing methods.",
+        "4": "Interfaces are small and role-focused, and invalid states are hard to represent."
+      }
+    },
+    {
+      "id": "abstraction",
+      "name": "Abstraction & patterns",
+      "question": "Are abstractions and patterns used where things genuinely vary, and only there?",
+      "levels": {
+        "1": "There is no abstraction where variation is obvious, or patterns are named without a purpose.",
+        "2": "Some useful abstractions exist, but others are missing or speculative.",
+        "3": "Abstractions sit at real variation points, each with a stated reason.",
+        "4": "There is just enough abstraction: every pattern earns its place and alternatives were weighed."
+      }
+    },
+    {
+      "id": "extensibility",
+      "name": "Extensibility",
+      "question": "How well does the original design absorb the curveball change request?",
+      "levels": {
+        "1": "The change is not credibly handled, or it requires reworking core classes.",
+        "2": "The change is handled, but by editing many existing classes or adding special cases.",
+        "3": "The change is mostly additive (new classes behind existing abstractions) with small, targeted edits.",
+        "4": "The change slots in through existing extension points, and its impact and risks are clearly explained."
+      }
+    },
+    {
+      "id": "robustness",
+      "name": "Edge cases & testability",
+      "question": "Does the design anticipate failure paths and allow parts to be tested in isolation?",
+      "levels": {
+        "1": "Only the happy path is considered.",
+        "2": "Some edge cases are listed but not reflected in the design.",
+        "3": "Important edge cases are handled by specific classes or flows, and there are seams for testing.",
+        "4": "Failure handling and concurrency are designed in, and dependencies can be substituted in tests."
+      }
+    },
+    {
+      "id": "tradeoffs",
+      "name": "Explanation & trade-offs",
+      "question": "Are decisions explained, with alternatives and consequences?",
+      "levels": {
+        "1": "No reasoning is given.",
+        "2": "Decisions are stated without alternatives or costs.",
+        "3": "Key decisions are justified against at least one alternative.",
+        "4": "Trade-offs are specific to this problem, including what was deliberately left out."
+      }
+    }
+  ]
+}

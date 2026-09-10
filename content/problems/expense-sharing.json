@@ -1,0 +1,73 @@
+{
+  "id": "expense-sharing",
+  "version": 1,
+  "title": "Expense Sharing",
+  "difficulty": "medium",
+  "estimatedMinutes": 40,
+  "summary": "Track shared expenses in groups, split them in different ways, and show who owes whom.",
+  "context": "Friends and flatmates share costs such as rent, groceries and trips. They want an app where anyone can add an expense they paid for, split it among the people involved, and see at a glance who owes whom. The money must add up exactly, because users notice when a rupee goes missing.",
+  "focusConcepts": ["Strategy", "Invariants", "Value objects"],
+  "requirements": [
+    { "id": "R1", "text": "Users can create groups and add members to them." },
+    { "id": "R2", "text": "A member adds an expense with a description, total amount, payer and participants." },
+    { "id": "R3", "text": "An expense is split equally, by exact amounts or by percentages. Exact amounts must add up to the total, and percentages to 100%." },
+    { "id": "R4", "text": "The app shows each member's balance in a group and who owes whom." },
+    { "id": "R5", "text": "A member records a settlement (a payment from one member to another) that reduces what is owed." },
+    { "id": "R6", "text": "Each group shows its history of expenses and settlements." },
+    { "id": "R7", "text": "Amounts are exact to the paisa. When an equal split leaves a remainder (₹100 among 3 people), the remainder is assigned by a clear rule." }
+  ],
+  "outOfScope": [
+    "Real payments or bank integration",
+    "Authentication and friend invitations",
+    "Receipt scanning",
+    "Notifications"
+  ],
+  "clarifyingQuestions": [
+    { "question": "Can the payer be left out of the split?", "answer": "Yes. The payer does not have to be a participant, for example when paying for someone else's ticket." },
+    { "question": "Can expenses be edited or deleted?", "answer": "Yes, and balances must reflect the change. Keep it simple, but correct." },
+    { "question": "How is the balance between two people shown?", "answer": "As one net amount per pair, such as 'Asha owes Ravi ₹250', not as two separate debts." },
+    { "question": "Who gets the extra paisa in an uneven equal split?", "answer": "Your choice, as long as the rule is deterministic and documented." }
+  ],
+  "keyFlows": ["Add an expense with a split", "View balances and settle up"],
+  "designPressures": [
+    "Split types will grow (shares, adjustments), so split calculation should be a pluggable strategy with its validation next to it.",
+    "Balances can be stored as running totals or derived from a ledger of expenses and settlements. Either is valid, but the choice affects edits, deletions and auditability.",
+    "Money needs a value object with integer minor units and explicit rounding; floating point is a correctness bug.",
+    "Invariants such as 'shares add up to the total' belong to the expense or the split, not to the UI or a controller."
+  ],
+  "edgeCases": [
+    "Percentages that do not add up to 100.",
+    "Remainders from uneven equal splits (₹100 among 3).",
+    "The payer is not among the participants.",
+    "A settlement larger than the amount owed.",
+    "Editing an expense after a settlement has been recorded."
+  ],
+  "curveballs": [
+    {
+      "id": "es-multi-currency",
+      "title": "Multiple currencies",
+      "description": "Groups now travel abroad, so each expense has a currency. Balances must be shown in each member's preferred currency, using the exchange rate from the day of the expense.",
+      "tests": "Whether Money was modelled as a value object, and whether balance calculation is isolated enough to add conversion without touching split logic."
+    },
+    {
+      "id": "es-simplify-debts",
+      "title": "Simplify debts",
+      "description": "Add a 'simplify debts' option that minimises the number of payments needed to settle a group without changing anyone's net balance. For example, if A owes B ₹10 and B owes C ₹10, A pays C directly.",
+      "tests": "Whether balances can be derived from a clean model, so a new settlement-planning algorithm can be added alongside the existing view."
+    }
+  ],
+  "alternativeApproaches": [
+    {
+      "name": "Split strategies with a ledger",
+      "summary": "Each split type is a SplitStrategy that produces Share objects. Expenses and settlements are appended to a group ledger, and balances are derived by aggregating it.",
+      "strengths": "Edits and deletes are straightforward and auditable, and new split types are additive.",
+      "tradeoffs": "Balances are recomputed (or cached) rather than read directly."
+    },
+    {
+      "name": "Running balance sheet",
+      "summary": "A BalanceSheet keeps a net amount per pair of members and is updated incrementally by each expense and settlement.",
+      "strengths": "Reads are fast and simple to display.",
+      "tradeoffs": "Edits and deletes require reversing earlier updates, which is error-prone, and history must be kept separately."
+    }
+  ]
+}

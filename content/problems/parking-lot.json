@@ -1,0 +1,74 @@
+{
+  "id": "parking-lot",
+  "version": 1,
+  "title": "Parking Lot",
+  "difficulty": "medium",
+  "estimatedMinutes": 40,
+  "summary": "A multi-floor parking garage with different spot and vehicle types, tickets, and time-based fees.",
+  "context": "A shopping mall runs a four-floor parking garage with several entry and exit gates. Each floor has spots of different sizes. Drivers take a ticket at entry, park, and pay at an exit gate based on how long they stayed. The mall changes its pricing a few times a year and is considering new services.",
+  "focusConcepts": ["Strategy", "Polymorphism", "Concurrency"],
+  "requirements": [
+    { "id": "R1", "text": "The lot has multiple floors; each floor has spots of type motorcycle, compact or large." },
+    { "id": "R2", "text": "Vehicles are motorcycles, cars or trucks, and each can only use compatible spots: a motorcycle can use any spot, a car a compact or large spot, and a truck only a large spot." },
+    { "id": "R3", "text": "At an entry gate, the system assigns an available compatible spot and issues a ticket with the entry time and spot." },
+    { "id": "R4", "text": "At an exit gate, the system calculates the fee from the parking duration and vehicle type, takes payment and frees the spot." },
+    { "id": "R5", "text": "Each floor displays the number of free spots per spot type." },
+    { "id": "R6", "text": "When no compatible spot is available, entry is refused with a message." },
+    { "id": "R7", "text": "Several gates operate at the same time, and a spot must never be assigned to two vehicles." }
+  ],
+  "outOfScope": [
+    "Number-plate recognition hardware",
+    "Payment gateway integration (assume a payment call either succeeds or fails)",
+    "Monthly passes and memberships",
+    "Managing more than one parking lot"
+  ],
+  "clarifyingQuestions": [
+    { "question": "How is the fee calculated?", "answer": "Cars pay ₹20 for the first hour and ₹10 for each additional started hour. Motorcycles pay half, trucks double. Expect these rules to change." },
+    { "question": "Which spot is assigned when several are free?", "answer": "The compatible spot on the lowest floor. The mall may want other strategies later." },
+    { "question": "What if a driver loses their ticket?", "answer": "Charge a fixed lost-ticket fee of ₹500." },
+    { "question": "Can a car use a large spot?", "answer": "Yes, but only if no compact spot is free." }
+  ],
+  "keyFlows": ["Vehicle enters and parks", "Vehicle exits and pays"],
+  "designPressures": [
+    "Pricing rules change several times a year, so fee calculation should be replaceable without touching tickets or spots.",
+    "Spot allocation policy (lowest floor, nearest to lift, by size) is a variation point separate from the lot's structure.",
+    "Vehicle-to-spot compatibility is a rule that grows with new vehicle and spot types; it should not be scattered across if-statements.",
+    "Concurrent gates require spot assignment to be atomic, with a single owner (the floor or an allocator) guarding it.",
+    "Tickets and payments are separate concepts from spots; the ticket links vehicle, spot and time."
+  ],
+  "edgeCases": [
+    "Two gates try to assign the same last spot at the same moment.",
+    "A driver loses their ticket.",
+    "Payment fails at the exit gate.",
+    "A car takes a large spot because no compact spot is free.",
+    "A stay crosses a pricing change or midnight."
+  ],
+  "curveballs": [
+    {
+      "id": "pl-ev-charging",
+      "title": "EV charging spots",
+      "description": "Some compact and large spots get chargers. An electric vehicle can request a charging spot at entry and pays the normal parking fee plus ₹15 per kWh delivered, as reported by the charger at exit. Non-electric vehicles may use a charging spot only when nothing else is free.",
+      "tests": "Whether spot types and pricing are open for extension: adding a spot capability and an extra fee component without rewriting allocation and billing."
+    },
+    {
+      "id": "pl-reservations",
+      "title": "Advance reservations",
+      "description": "Drivers can reserve a spot type on a floor for a time window through an app. The reserved spot is held for them. If they have not arrived 15 minutes after the window starts, the reservation expires and the spot is released.",
+      "tests": "Whether spot availability and allocation are encapsulated well enough to add a 'held' state and a time-based release without breaking the gate flows."
+    }
+  ],
+  "alternativeApproaches": [
+    {
+      "name": "Spot types with pluggable strategies",
+      "summary": "ParkingSpot variants per size, a compatibility rule from vehicle type to allowed spot types, a SpotAllocationStrategy for choosing spots and a PricingStrategy for fees. ParkingFloor owns its spots and assigns them atomically.",
+      "strengths": "Pricing and allocation vary independently, and each can be tested alone.",
+      "tradeoffs": "Subclassing spots by size is overkill if spots differ only by a type field."
+    },
+    {
+      "name": "Data-driven types and rule tables",
+      "summary": "A single ParkingSpot with a SpotType enum, a compatibility matrix held as data and a rule-based fee table. A central SpotAllocator uses a lock or per-floor queue for atomic assignment.",
+      "strengths": "New types and prices become configuration rather than code.",
+      "tradeoffs": "Rules held as data are harder to validate and debug, and complex pricing logic may not fit a table."
+    }
+  ]
+}

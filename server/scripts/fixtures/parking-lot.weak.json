@@ -1,0 +1,34 @@
+{
+  "label": "weak",
+  "problemId": "parking-lot",
+  "curveballId": "pl-ev-charging",
+  "design": {
+    "assumptions": "",
+    "entities": [
+      { "id": "e1", "name": "ParkingLot", "kind": "class", "responsibility": "Handles everything: parking, pricing, payment and the displays.", "attributes": "spots: List<Spot>\ncars: List<Car>\nmoney: double", "methods": "park(car)\nunpark(car)\ncalculateFee(car)\npay(amount)\nfindSpot(car)\nupdateDisplay()\naddSpot(spot)\nremoveSpot(spot)\nisFull()\ngetSpots()\nsetSpots(spots)\ngetMoney()" },
+      { "id": "e2", "name": "Car", "kind": "class", "responsibility": "A car.", "attributes": "number: String\nisTruck: boolean\nisBike: boolean", "methods": "getNumber()" },
+      { "id": "e3", "name": "Spot", "kind": "class", "responsibility": "A parking spot.", "attributes": "size: String\nfree: boolean", "methods": "getFree()\nsetFree(value)" }
+    ],
+    "relationships": [
+      { "id": "r1", "fromId": "e1", "type": "associates", "toId": "e3", "note": "" },
+      { "id": "r2", "fromId": "e3", "type": "associates", "toId": "e2", "note": "" }
+    ],
+    "requirementMappings": {
+      "R1": "ParkingLot has a list of spots.",
+      "R3": "The park method."
+    },
+    "flows": [
+      { "id": "f1", "name": "Park", "steps": "Call park, it finds a free spot, sets it to not free and saves the time." }
+    ],
+    "edgeCases": "",
+    "decisions": [
+      { "id": "d1", "decision": "Use one main class for simplicity.", "alternative": "", "rationale": "Easier to write." }
+    ]
+  },
+  "changeImpact": {
+    "approach": "Add an isElectric flag to Car and a hasCharger flag to Spot, and add an if statement in calculateFee to add the per kWh charge.",
+    "modifiedEntityIds": ["e1", "e2", "e3"],
+    "newEntities": [],
+    "risks": ""
+  }
+}

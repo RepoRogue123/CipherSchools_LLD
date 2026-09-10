@@ -1,0 +1,64 @@
+{
+  "label": "strong",
+  "problemId": "parking-lot",
+  "curveballId": "pl-ev-charging",
+  "design": {
+    "assumptions": "One garage, four floors, several gates running concurrently. The payment gateway is external and can fail. Monthly passes, reservations and multiple garages are out of scope. Money is held in paise to avoid rounding errors.",
+    "entities": [
+      { "id": "e1", "name": "ParkingLot", "kind": "class", "responsibility": "Facade for the gates: coordinates entry and exit and delegates allocation, ticketing and pricing.", "attributes": "floors: List<ParkingFloor>\nallocator: SpotAllocationStrategy\npricing: PricingStrategy\ntickets: TicketRepository", "methods": "enter(vehicle): Ticket\nexit(ticketId, payment): Receipt" },
+      { "id": "e2", "name": "ParkingFloor", "kind": "class", "responsibility": "Owns its spots and is the single place a spot is reserved or released, under a per-floor lock.", "attributes": "level: int\nspots: Map<SpotType, List<ParkingSpot>>", "methods": "tryReserve(vehicle, rule): Optional<ParkingSpot>\nrelease(spot)\nfreeCount(type): int" },
+      { "id": "e3", "name": "ParkingSpot", "kind": "class", "responsibility": "One spot with a type; guards its own occupancy so a spot never holds two vehicles.", "attributes": "id: SpotId\ntype: SpotType\noccupant: Optional<Vehicle>", "methods": "occupy(vehicle)\nvacate()\nisFree(): boolean" },
+      { "id": "e4", "name": "SpotType", "kind": "enum", "responsibility": "The physical sizes a spot can have.", "attributes": "MOTORCYCLE, COMPACT, LARGE", "methods": "" },
+      { "id": "e5", "name": "CompatibilityRule", "kind": "class", "responsibility": "Knows which spot types each vehicle type may use, in order of preference, as data.", "attributes": "allowed: Map<VehicleType, List<SpotType>>", "methods": "allowedFor(vehicleType): List<SpotType>" },
+      { "id": "e6", "name": "SpotAllocationStrategy", "kind": "interface", "responsibility": "Chooses which floor to try first for a vehicle.", "attributes": "", "methods": "orderFloors(floors, vehicle): List<ParkingFloor>" },
+      { "id": "e7", "name": "LowestFloorFirst", "kind": "class", "responsibility": "Default allocation policy: try floors from the lowest level up.", "attributes": "", "methods": "orderFloors(floors, vehicle): List<ParkingFloor>" },
+      { "id": "e8", "name": "PricingStrategy", "kind": "interface", "responsibility": "Computes the fee for a finished stay.", "attributes": "", "methods": "fee(ticket, exitTime): Money" },
+      { "id": "e9", "name": "HourlyPricing", "kind": "class", "responsibility": "First hour flat, then per started hour, with a multiplier per vehicle type.", "attributes": "firstHour: Money\nperHour: Money\nmultiplier: Map<VehicleType, Rational>", "methods": "fee(ticket, exitTime): Money" },
+      { "id": "e10", "name": "Ticket", "kind": "class", "responsibility": "Immutable record linking vehicle, spot and entry time.", "attributes": "id: TicketId\nvehicle: Vehicle\nspot: ParkingSpot\nentryTime: Instant", "methods": "" },
+      { "id": "e11", "name": "Vehicle", "kind": "class", "responsibility": "A plate and a vehicle type; no behaviour beyond identity.", "attributes": "plate: String\ntype: VehicleType", "methods": "" },
+      { "id": "e12", "name": "PaymentGateway", "kind": "interface", "responsibility": "Charges an amount and reports success or failure.", "attributes": "", "methods": "charge(amount, payment): PaymentResult" }
+    ],
+    "relationships": [
+      { "id": "r1", "fromId": "e1", "type": "composes", "toId": "e2", "note": "the lot owns its floors" },
+      { "id": "r2", "fromId": "e2", "type": "composes", "toId": "e3", "note": "" },
+      { "id": "r3", "fromId": "e3", "type": "associates", "toId": "e4", "note": "" },
+      { "id": "r4", "fromId": "e2", "type": "depends", "toId": "e5", "note": "which spot types to try" },
+      { "id": "r5", "fromId": "e1", "type": "depends", "toId": "e6", "note": "floor order" },
+      { "id": "r6", "fromId": "e7", "type": "implements", "toId": "e6", "note": "" },
+      { "id": "r7", "fromId": "e1", "type": "depends", "toId": "e8", "note": "fee at exit" },
+      { "id": "r8", "fromId": "e9", "type": "implements", "toId": "e8", "note": "" },
+      { "id": "r9", "fromId": "e10", "type": "associates", "toId": "e3", "note": "" },
+      { "id": "r10", "fromId": "e10", "type": "associates", "toId": "e11", "note": "" },
+      { "id": "r11", "fromId": "e1", "type": "depends", "toId": "e12", "note": "payment at exit" }
+    ],
+    "requirementMappings": {
+      "R1": "ParkingLot composes ParkingFloor; each ParkingFloor holds ParkingSpot objects grouped by SpotType.",
+      "R2": "CompatibilityRule.allowedFor(vehicleType) lists usable SpotType values in preference order; ParkingFloor.tryReserve uses it.",
+      "R3": "ParkingLot.enter asks the SpotAllocationStrategy for a floor order, calls ParkingFloor.tryReserve, and issues a Ticket.",
+      "R4": "ParkingLot.exit asks PricingStrategy.fee for the amount, charges through PaymentGateway, then ParkingFloor.release frees the spot.",
+      "R5": "ParkingFloor.freeCount(type) feeds each floor display.",
+      "R6": "When every floor returns empty from tryReserve, ParkingLot.enter raises LotFull and the gate shows the message.",
+      "R7": "ParkingFloor.tryReserve and release run under a per-floor lock and ParkingSpot.occupy rejects a second vehicle, so two gates never get the same spot."
+    },
+    "flows": [
+      { "id": "f1", "name": "Vehicle enters and parks", "steps": "1. Gate calls ParkingLot.enter(vehicle).\n2. ParkingLot gets floors in order from SpotAllocationStrategy.\n3. For each floor, ParkingFloor.tryReserve(vehicle, CompatibilityRule) locks the floor, picks the first free spot of an allowed SpotType and calls ParkingSpot.occupy.\n4. ParkingLot creates a Ticket and stores it.\n5. If no floor succeeds, ParkingLot raises LotFull." },
+      { "id": "f2", "name": "Vehicle exits and pays", "steps": "1. Gate calls ParkingLot.exit(ticketId, payment).\n2. PricingStrategy.fee(ticket, now) returns the amount.\n3. PaymentGateway.charge is called; on failure the spot stays occupied and the gate asks for another payment.\n4. On success ParkingFloor.release(spot) calls ParkingSpot.vacate and the ticket is closed." }
+    ],
+    "edgeCases": "Two gates racing for the last spot: ParkingFloor.tryReserve holds a per-floor lock and ParkingSpot.occupy refuses a second occupant. Lost ticket: ParkingLot.exit accepts a plate lookup and PricingStrategy charges the flat lost-ticket fee. Payment failure: the spot is released only after PaymentGateway reports success. A car may take a LARGE spot only when CompatibilityRule lists it after COMPACT. Stays across midnight are handled because HourlyPricing works on the duration, not the calendar day. Every collaborator is an interface or injected object, so each can be tested with fakes.",
+    "decisions": [
+      { "id": "d1", "decision": "Pricing sits behind a PricingStrategy interface.", "alternative": "A fee table hard-coded inside ParkingLot.", "rationale": "The mall changes pricing several times a year; a new strategy changes nothing in tickets, floors or spots. It costs one interface and a class." },
+      { "id": "d2", "decision": "Spot types are an enum plus a CompatibilityRule held as data.", "alternative": "A subclass per spot size.", "rationale": "Spots differ only by size, so subclasses would add hierarchy without behaviour; a rule table makes new vehicle types a data change." },
+      { "id": "d3", "decision": "Lock per floor instead of one global lock.", "alternative": "A single lot-wide lock.", "rationale": "Gates on different floors do not block each other; the cost is that a full floor is tried and released before the next." }
+    ]
+  },
+  "changeImpact": {
+    "approach": "EV charging is mostly additive. A ChargingCapability is attached to a ParkingSpot (composition, not a new spot subclass), so SpotType stays about size. CompatibilityRule gains a preference for spots with a charger when an EV requests one, and a non-EV only falls back to them when nothing else is free, which is data plus one ordering rule. Pricing becomes a CompositePricing that adds an EnergyFee component to the existing HourlyPricing, reading the kWh reported by the charger at exit. Ticket records whether charging was requested.",
+    "modifiedEntityIds": ["e5", "e10"],
+    "newEntities": [
+      { "id": "n1", "name": "ChargingCapability", "responsibility": "Attached to a spot; reports energy delivered in kWh." },
+      { "id": "n2", "name": "CompositePricing", "responsibility": "Sums fee components so new charges add without editing existing ones." },
+      { "id": "n3", "name": "EnergyFee", "responsibility": "Charges ₹15 per kWh reported for the stay." }
+    ],
+    "risks": "The charger report is external and can be missing at exit; EnergyFee must default to zero and flag the ticket for review."
+  }
+}

@@ -1,0 +1,222 @@
+@import 'tailwindcss';
+
+/*
+ * DesignLoop visual language: a design review on drafting paper.
+ * Cobalt ink is for anything interactive, red pencil is only for reviewer
+ * concerns and blockers, and highlighter is only for evidence quoted from the
+ * learner's own design.
+ */
+@theme {
+  --color-paper: #f4f6f8;
+  --color-sheet: #ffffff;
+  --color-ink: #16202c;
+  --color-ink-soft: #4a5868;
+  --color-ink-faint: #7b8794;
+  --color-rule: #d5dce4;
+  --color-rule-strong: #b3bfcc;
+  --color-cobalt: #2757a8;
+  --color-cobalt-deep: #1d437f;
+  --color-cobalt-wash: #e7eef9;
+  --color-pencil: #c2412e;
+  --color-pencil-wash: #fbece9;
+  --color-amber: #946010;
+  --color-amber-wash: #fbf1dd;
+  --color-moss: #2f7a57;
+  --color-moss-wash: #e4f2eb;
+  --color-highlight: #ffe27a;
+
+  --font-sans: 'Archivo', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+}
+
+@layer base {
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    min-height: 100vh;
+  }
+
+  /* Expanded widths make headings the personality of the page. */
+  h1,
+  h2,
+  h3 {
+    font-stretch: 112%;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-cobalt);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .field {
+    width: 100%;
+    border: 1px solid var(--color-rule);
+    background: var(--color-sheet);
+    border-radius: 6px;
+    padding: 0.5rem 0.625rem;
+    font-size: 0.9375rem;
+    color: var(--color-ink);
+    transition: border-color 120ms ease;
+  }
+  .field:hover {
+    border-color: var(--color-rule-strong);
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-cobalt);
+    box-shadow: 0 0 0 3px var(--color-cobalt-wash);
+  }
+  .field:disabled,
+  .field[readonly] {
+    background: var(--color-paper);
+    color: var(--color-ink-soft);
+    cursor: not-allowed;
+  }
+  textarea.field {
+    resize: vertical;
+    min-height: 4.5rem;
+    line-height: 1.5;
+  }
+  .field-code {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 6px;
+    padding: 0.5rem 0.95rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease,
+      color 120ms ease;
+    white-space: nowrap;
+  }
+  .btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  .btn-primary {
+    background: var(--color-cobalt);
+    color: #fff;
+  }
+  .btn-primary:not(:disabled):hover {
+    background: var(--color-cobalt-deep);
+  }
+  .btn-secondary {
+    background: var(--color-sheet);
+    border-color: var(--color-rule-strong);
+    color: var(--color-ink);
+  }
+  .btn-secondary:not(:disabled):hover {
+    border-color: var(--color-cobalt);
+    color: var(--color-cobalt);
+  }
+  .btn-quiet {
+    background: transparent;
+    color: var(--color-cobalt);
+    padding-inline: 0.5rem;
+  }
+  .btn-quiet:not(:disabled):hover {
+    background: var(--color-cobalt-wash);
+  }
+
+  .link {
+    color: var(--color-cobalt);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  .link:hover {
+    color: var(--color-cobalt-deep);
+  }
+
+  /* Small condensed labels inside title blocks and rows, in sentence case. */
+  .label {
+    font-stretch: 80%;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-ink-faint);
+  }
+
+  .code {
+    font-family: var(--font-mono);
+    font-size: 0.8125em;
+  }
+
+  /* Evidence quoted from the learner's design, marked like a highlighter pass. */
+  .evidence-mark {
+    background: linear-gradient(transparent 12%, color-mix(in srgb, var(--color-highlight) 70%, transparent) 12%, color-mix(in srgb, var(--color-highlight) 70%, transparent) 88%, transparent 88%);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    padding: 0 0.15em;
+  }
+  .evidence-unverified {
+    text-decoration: line-through;
+    text-decoration-color: var(--color-pencil);
+    text-decoration-thickness: 1.5px;
+    color: var(--color-ink-soft);
+  }
+}
+
+/* The one orchestrated moment: the curveball arriving and the design locking. */
+@keyframes curveball-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes stamp-in {
+  from {
+    opacity: 0;
+    transform: rotate(-8deg) scale(1.4);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-4deg) scale(1);
+  }
+}
+.animate-curveball {
+  animation: curveball-in 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.animate-stamp {
+  animation: stamp-in 360ms 180ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}

@@ -1,6 +1,52 @@
-import type { DesignDocument, FeedbackReport } from '@designloop/shared';
-import type { ProblemData } from '../../src/domain/problem';
+import type { ChangeImpact, DesignDocument, FeedbackReport } from '@designloop/shared';
+import type { EvaluationContext, EvaluatorOutput } from '../../src/domain/evaluator';
+import { Problem, type ProblemData } from '../../src/domain/problem';
 import { Rubric } from '../../src/domain/rubric';
+import { Submission } from '../../src/domain/submission';
+import { StructuredDesignFormatV1 } from '../../src/evaluation/formats/structured-design-v1';
+
+export function aChangeImpact(): ChangeImpact {
+  return {
+    approach: 'Add a ChargingSpot type and an EnergyFee component behind PricingStrategy; ParkingFloor learns to allocate it.',
+    modifiedEntityIds: ['e2'],
+    newEntities: [
+      { id: 'n1', name: 'ChargingSpot', responsibility: 'A spot with a charger that meters energy.' },
+      { id: 'n2', name: 'EnergyFee', responsibility: 'Adds the per-kWh cost.' },
+    ],
+    risks: 'Pricing now has two components.',
+  };
+}
+
+export function aSubmission(overrides: { design?: DesignDocument; changeImpact?: ChangeImpact } = {}): Submission {
+  return Submission.create({
+    id: 'sub-1',
+    attemptId: 'att-1',
+    learnerId: 'lrn-1',
+    problemId: 'parking-lot',
+    curveballId: 'c-first',
+    design: overrides.design ?? aDesign(),
+    changeImpact: overrides.changeImpact ?? aChangeImpact(),
+    submittedAt: new Date('2026-09-10T10:30:00Z'),
+  });
+}
+
+/** A fully built evaluation context over `aDesign()`, using the real format adapter. */
+export function aContext(overrides: Partial<EvaluationContext> = {}): EvaluationContext {
+  const problem = overrides.problem ?? new Problem(aProblemData());
+  const submission = overrides.submission ?? aSubmission();
+  const format = new StructuredDesignFormatV1();
+  const model = format.toModel(submission.design, submission.changeImpact);
+  return {
+    submission,
+    problem,
+    curveball: problem.findCurveball(submission.curveballId)!,
+    rubric: aRubric(),
+    model,
+    review: format.render(model, problem),
+    priorOutputs: new Map<string, EvaluatorOutput>(),
+    ...overrides,
+  };
+}
 
 /** A four-criterion rubric with literal labels, for tests that need hand-checkable expectations. */
 export function aRubric(): Rubric {

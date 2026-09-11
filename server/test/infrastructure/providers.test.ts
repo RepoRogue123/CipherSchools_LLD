@@ -4,7 +4,7 @@ import { providerConfigsFromEnv } from '../../src/infrastructure/llm/providers';
 describe('providerConfigsFromEnv', () => {
   test('keeps the configured order and skips providers without a key', () => {
     const configs = providerConfigsFromEnv(
-      { LLM_PROVIDERS: 'groq,gemini,openrouter', GEMINI_API_KEY: 'g', OPENROUTER_API_KEY: 'o' },
+      { LLM_PROVIDERS: 'groq,gemini,openrouter', GEMINI_API_KEY: 'g', GEMINI_MODEL: 'g-model', OPENROUTER_API_KEY: 'o' },
       30_000,
     );
 
@@ -21,6 +21,26 @@ describe('providerConfigsFromEnv', () => {
 
     expect(configs).toHaveLength(1);
     expect(configs[0]).toMatchObject({ name: 'groq', model: 'qwen/qwen3.8-27b' });
+  });
+
+  test('a comma-separated model list becomes one provider per model, in order (free quotas are per model)', () => {
+    const configs = providerConfigsFromEnv(
+      { LLM_PROVIDERS: 'gemini,groq', GEMINI_API_KEY: 'g', GEMINI_MODEL: 'model-a, model-b,,model-a', GROQ_API_KEY: 'k' },
+      1_000,
+    );
+
+    expect(configs.map((c) => [c.name, c.model])).toEqual([
+      ['gemini', 'model-a'],
+      ['gemini', 'model-b'],
+      ['groq', 'openai/gpt-oss-120b'],
+    ]);
+    expect(configs[1]).toMatchObject({ apiKey: 'g', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai' });
+  });
+
+  test('the default Gemini chain is a pinned model followed by the always-current alias', () => {
+    const configs = providerConfigsFromEnv({ LLM_PROVIDERS: 'gemini', GEMINI_API_KEY: 'g' }, 1_000);
+
+    expect(configs.map((c) => c.model)).toEqual(['gemini-3.6-flash', 'gemini-flash-latest']);
   });
 
   test('returns nothing when no keys are set, which disables AI review', () => {

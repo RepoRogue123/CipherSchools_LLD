@@ -7,7 +7,7 @@ import { Submission } from '../src/domain/submission';
 import { FileProblemCatalog, loadRubric } from '../src/infrastructure/content/file-problem-catalog';
 import { FallbackLlmClient } from '../src/infrastructure/llm/fallback-llm-client';
 import { OpenAiCompatibleClient } from '../src/infrastructure/llm/openai-compatible-client';
-import { providerConfigsFromEnv } from '../src/infrastructure/llm/providers';
+import { providerConfigsFromEnv, providerKey } from '../src/infrastructure/llm/providers';
 import { systemClock } from '../src/infrastructure/system';
 
 /** Shared setup for the operator scripts (smoke test, calibration). */
@@ -21,7 +21,7 @@ export function loadEnvironment() {
 
 export function fallbackClient(providers: ReturnType<typeof loadEnvironment>['providers']) {
   return new FallbackLlmClient(
-    providers.map((p) => ({ name: p.name, client: new OpenAiCompatibleClient(p) })),
+    providers.map((p) => ({ name: providerKey(p), client: new OpenAiCompatibleClient(p) })),
     systemClock,
   );
 }

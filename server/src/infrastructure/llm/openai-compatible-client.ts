@@ -20,6 +20,7 @@ interface ChatMessage {
 }
 
 const MAX_ERROR_DETAIL = 240;
+const DAILY_QUOTA_COOLDOWN_MS = 60 * 60_000;
 
 /**
  * One adapter for every OpenAI-compatible chat endpoint (Gemini, Groq,
@@ -118,8 +119,10 @@ export class OpenAiCompatibleClient implements LlmClient {
     const prefix = `${this.config.name} responded ${response.status}`;
     const status = response.status;
     if (status === 429) {
-      return new LlmError('rate_limited', `${prefix}: rate limited`, {
-        retryAfterMs: retryAfterMs(response.headers.get('retry-after'), raw),
+      // A spent daily quota won't come back in the few seconds the provider suggests.
+      const dailyQuota = /PerDay/i.test(raw);
+      return new LlmError('rate_limited', `${prefix}: ${dailyQuota ? 'daily quota used up' : 'rate limited'}`, {
+        retryAfterMs: dailyQuota ? DAILY_QUOTA_COOLDOWN_MS : retryAfterMs(response.headers.get('retry-after'), raw),
       });
     }
     // Gemini rejects a bad key with 400 INVALID_ARGUMENT rather than 401.

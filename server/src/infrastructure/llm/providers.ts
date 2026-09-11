@@ -19,7 +19,7 @@ const PRESETS: Record<string, ProviderPreset> = {
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
     keyEnv: 'GEMINI_API_KEY',
     modelEnv: 'GEMINI_MODEL',
-    defaultModel: 'gemini-2.5-flash',
+    defaultModel: 'gemini-3.6-flash,gemini-flash-latest',
     outputMode: 'json_schema',
     extraBody: { reasoning_effort: 'low' },
   },
@@ -74,15 +74,35 @@ export function providerConfigsFromEnv(env: Env, timeoutMs: number): ProviderCon
     const preset = PRESETS[name]!;
     const apiKey = env[preset.keyEnv]?.trim();
     if (!apiKey) continue;
-    configs.push({
-      name,
-      baseUrl: preset.baseUrl,
-      apiKey,
-      model: env[preset.modelEnv]?.trim() || preset.defaultModel,
-      outputMode: preset.outputMode,
-      timeoutMs,
-      ...(preset.extraBody ? { extraBody: preset.extraBody } : {}),
-    });
+    // Free-tier quotas are per model, so a comma-separated list adds each model
+    // to the fallback chain as its own provider entry.
+    for (const model of modelList(env[preset.modelEnv]?.trim() || preset.defaultModel)) {
+      configs.push({
+        name,
+        baseUrl: preset.baseUrl,
+        apiKey,
+        model,
+        outputMode: preset.outputMode,
+        timeoutMs,
+        ...(preset.extraBody ? { extraBody: preset.extraBody } : {}),
+      });
+    }
   }
   return configs;
+}
+
+function modelList(value: string): string[] {
+  return [
+    ...new Set(
+      value
+        .split(',')
+        .map((model) => model.trim())
+        .filter(Boolean),
+    ),
+  ];
+}
+
+/** Unique key per provider entry (the same provider can appear once per model). */
+export function providerKey(config: Pick<ProviderConfig, 'name' | 'model'>): string {
+  return `${config.name}/${config.model}`;
 }

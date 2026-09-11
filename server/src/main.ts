@@ -8,7 +8,7 @@ import { createApp } from './http/app';
 import { FileProblemCatalog, loadRubric } from './infrastructure/content/file-problem-catalog';
 import { FallbackLlmClient } from './infrastructure/llm/fallback-llm-client';
 import { OpenAiCompatibleClient } from './infrastructure/llm/openai-compatible-client';
-import { providerConfigsFromEnv } from './infrastructure/llm/providers';
+import { providerConfigsFromEnv, providerKey } from './infrastructure/llm/providers';
 import { openDatabase } from './infrastructure/sqlite/database';
 import { randomIds, systemClock } from './infrastructure/system';
 
@@ -22,7 +22,7 @@ const rubric = loadRubric(path.join(config.contentDir, 'rubric.v1.json'));
 const providers = providerConfigsFromEnv(process.env, config.llmTimeoutMs);
 const llm = providers.length
   ? new FallbackLlmClient(
-      providers.map((provider) => ({ name: provider.name, client: new OpenAiCompatibleClient(provider) })),
+      providers.map((provider) => ({ name: providerKey(provider), client: new OpenAiCompatibleClient(provider) })),
       systemClock,
     )
   : null;

@@ -14,6 +14,7 @@ import type { LlmClient } from './evaluation/llm/llm-client';
 import { LlmRubricEvaluator } from './evaluation/llm/llm-rubric-evaluator';
 import { PROMPT_VERSION } from './evaluation/llm/prompt-builder';
 import { StructuralEvaluator } from './evaluation/structural/structural-evaluator';
+import { providerKey } from './infrastructure/llm/providers';
 import {
   SqliteAttemptRepository,
   SqliteEvaluationRepository,
@@ -29,6 +30,7 @@ export interface ContainerOptions {
   /** null when no AI provider is configured: evaluations then complete with deterministic feedback only. */
   llm: LlmClient | null;
   llmProviders: { name: string; model: string }[];
+  /** Cooldowns keyed by `providerKey` ("name/model"); the same provider can appear once per model. */
   llmStatus?: () => { name: string; coolingDownUntil: Date | null }[];
   clock: Clock;
   ids: IdGenerator;
@@ -89,7 +91,7 @@ export function buildContainer(options: ContainerOptions) {
         providers: options.llmProviders.map((p) => ({
           name: p.name,
           model: p.model,
-          coolingDownUntil: cooling.get(p.name)?.toISOString() ?? null,
+          coolingDownUntil: cooling.get(providerKey(p))?.toISOString() ?? null,
         })),
       },
     };

@@ -179,6 +179,26 @@ describe('OpenAiCompatibleClient error classification', () => {
     expect(error.retryAfterMs).toBe(23_000);
   });
 
+  test('an exhausted daily quota cools the provider down for an hour, not the few seconds Gemini suggests', async () => {
+    const body = JSON.stringify([
+      {
+        error: {
+          code: 429,
+          details: [
+            { violations: [{ quotaId: 'GenerateRequestsPerDayPerProjectPerModel-FreeTier' }] },
+            { retryDelay: '26s' },
+          ],
+        },
+      },
+    ]);
+    const { fetchFn } = fakeFetch(httpError(429, body));
+
+    const error = await capture(new OpenAiCompatibleClient(config, fetchFn).completeJson(request, schema));
+
+    expect(error.kind).toBe('rate_limited');
+    expect(error.retryAfterMs).toBe(60 * 60_000);
+  });
+
   test('a timed-out request is a retryable timeout', async () => {
     const { fetchFn } = fakeFetch(new DOMException('The operation timed out.', 'TimeoutError'));
 

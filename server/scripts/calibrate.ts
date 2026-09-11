@@ -6,7 +6,7 @@
  *   npm run calibrate -- --runs 5
  */
 import type { FeedbackReport } from '@designloop/shared';
-import type { EvaluatorOutput } from '../src/domain/evaluator';
+import { EvaluatorError, type EvaluatorOutput } from '../src/domain/evaluator';
 import { FeedbackAssembler } from '../src/evaluation/feedback-assembler';
 import { StructuredDesignFormatV1 } from '../src/evaluation/formats/structured-design-v1';
 import { LlmRubricEvaluator } from '../src/evaluation/llm/llm-rubric-evaluator';
@@ -45,10 +45,28 @@ async function review(fixtureFile: string): Promise<FeedbackReport> {
   });
 }
 
+/**
+ * Free tiers return 503 "high demand" in bursts, so retry transient failures
+ * with growing pauses instead of aborting the whole calibration run.
+ */
+async function withRetry<T>(label: string, work: () => Promise<T>): Promise<T> {
+  const delaysMs = [15_000, 30_000, 60_000, 90_000];
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await work();
+    } catch (error) {
+      const delay = delaysMs[attempt];
+      if (!(error instanceof EvaluatorError && error.retryable) || delay === undefined) throw error;
+      console.log(`${label}: ${error.message} Retrying in ${delay / 1000}s.`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+}
+
 const results: Record<string, FeedbackReport[]> = { strong: [], weak: [] };
 for (const label of ['strong', 'weak'] as const) {
   for (let run = 1; run <= RUNS; run += 1) {
-    const report = await review(`parking-lot.${label}.json`);
+    const report = await withRetry(`${label} run ${run}`, () => review(`parking-lot.${label}.json`));
     results[label]!.push(report);
     const verified = report.criteria.flatMap((c) => c.evidence).filter((e) => e.verified).length;
     const quotes = report.criteria.flatMap((c) => c.evidence).length;

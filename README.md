@@ -13,7 +13,7 @@ Most LLD practice ends by comparing your design with a reference solution. That 
 | Research note | [docs/RESEARCH.md](docs/RESEARCH.md) | The learner problem, existing tools, key gaps, product direction |
 | Design note | [docs/DESIGN.md](docs/DESIGN.md) | The MVP and user flow; classes and interfaces; evaluation approach; failure handling; the two change tests; trade-offs |
 | Working prototype | this repo, see [Run it](#run-it) | The full loop: choose a problem, design, reveal the curveball, submit, get feedback, see history, try again |
-| Tests | `server/test`, `web/src/**/*.test.tsx`, see [Tests](#tests) | 210 tests, including failure and edge cases |
+| Tests | `server/test`, `web/src/**/*.test.tsx`, see [Tests](#tests) | 214 tests, including failure and edge cases |
 | AI usage | [AI_USAGE.md](AI_USAGE.md) | Five AI-assisted decisions: what was suggested, what was accepted or rejected, and why |
 
 ## Screenshots
@@ -140,7 +140,7 @@ The domain layer has no framework imports. `server/src/container.ts` is the only
 ## Tests
 
 ```bash
-npm test            # 201 server tests (unit, integration, HTTP) + 9 web component tests
+npm test            # 205 server tests (unit, integration, HTTP) + 9 web component tests
 npm run check       # lint, typecheck, test and build: the same steps CI runs on every push
 npm run calibrate   # with an AI key: strong vs weak design, repeated runs, score spread
 ```
@@ -166,6 +166,7 @@ Server tests run against real SQLite (in memory) and a scripted model. They cove
 **Live verification**, run against the real free tiers and recorded in [DESIGN.md §6](docs/DESIGN.md#calibration):
 - **Calibration:** the strong example design scored 4.00 in all three runs and the weak one 1.38–1.50, and every quote was verified.
 - **Browser run:** the full loop went from 1.13 to 3.88 across two attempts.
+- **All four problems:** a complete design for each went through the whole loop in Chrome with real AI review, including the curveball, design lock, duplicate submit, debrief, revise with the second curveball, and history. Scores: Vending Machine 3.88, Expense Sharing 3.88, Elevator 2.88 (reviewed by Groq through the fallback chain) and Parking Lot 4.00.
 - **Drills:** a crash-recovery drill and a provider-fallback drill both passed.
 
 ## Limitations

@@ -292,7 +292,7 @@ A cap only ever lowers a score. The report shows the reviewer's original score a
 - **Evidence first**: the output schema asks for quotes, then reasoning, then the score, for every criterion.
 - **Structured output** validated by a Zod schema. A missing criterion or an out-of-range score gets one repair attempt, then the next provider is tried.
 - **Low temperature** (0.2) and a versioned prompt (`lld-review/v1`), recorded with every report along with the provider and model.
-- **Evidence verification** (`evidence-verifier.ts`): a quote counts only if it appears in the text the model was shown, either verbatim (ignoring case and punctuation) or near-verbatim (at least 80% of its words) within the section it cites. Unverified quotes are struck through in the UI, and a score of 3+ with no verified evidence is shown as low confidence.
+- **Evidence verification** (`evidence-verifier.ts`): a quote counts only if it comes from what the learner wrote, either verbatim (ignoring case and punctuation) or near-verbatim (at least 80% of its words) within the section it cites. Section headings are ours, and a requirement's heading carries the problem's own wording, so a leading heading is set aside before the check and a quote that is only a heading is dropped. An entity's name and kind do count, because the learner chose them. Unverified quotes are struck through in the UI, and a score of 3+ with no verified evidence is shown as low confidence.
 - **Prompt-injection hygiene**: the submission is fenced as data, and caps bound the result anyway.
 
 ### Calibration
@@ -335,12 +335,24 @@ The deterministic half is already covered by tests (`calibration-fixtures.test.t
 - **Comparison:** "Since attempt #1" showed +2.75, every criterion improved, and 7 structural findings resolved.
 - **Fallback:** `gemini-3.6-flash` had spent its daily quota, so the chain moved on and `gemini-3.5-flash` did both reviews.
 
+**Every problem, end to end** (same day, Chrome, real AI review). A complete design for each problem went through the whole loop: the curveball, the design lock, a duplicate submit, the debrief, then "Revise this design" with focus goals and the second curveball, and finally history.
+
+| Problem | Result | Reviewer | Quotes verified |
+|---|---|---|---|
+| Vending Machine | Strong, 3.88 | `gemini-3.5-flash` | 9/9 |
+| Expense Sharing | Strong, 3.88 | `gemini-3.5-flash` | 14/14 |
+| Elevator | Solid, 2.88 | Groq `openai/gpt-oss-120b`, through the fallback chain | 23/24 |
+| Parking Lot | Strong, 4.00 | `gemini-3.5-flash` | 16/16 |
+
+76 of 77 checks passed. The one miss was an unverified quote that turned out to be a section heading, which led to the last change below.
+
 **What live testing changed:**
 
 - **A retired model.** Google had retired the original default model (`gemini-2.5-flash`) for new keys, so `*_MODEL` now accepts a list and the default chain ends with the `gemini-flash-latest` alias.
 - **Invalid keys return 400.** Gemini rejects a bad key with HTTP 400, not 401, so that response is now classified as an auth failure.
 - **Busy spells.** Free tiers return 503 "high demand" in bursts, which confirmed the need for backoff and fallback.
 - **Per-model quotas.** Quotas apply per model, so chaining models on one key multiplies free capacity. A daily-quota 429 now pauses that model for an hour instead of the few seconds the provider suggests.
+- **Quoting the problem back.** Reviewers sometimes quoted a heading, and once quoted a requirement's own text as the learner's evidence. The verifier used to accept both, because they appear in the text the model is shown. It now checks only the learner's words. Re-running it over the 88 quotes from the two browser runs above: 84 verify, 3 heading-only quotes are dropped, and the requirement quote is flagged.
 
 ## 7. Failure handling and idempotency
 

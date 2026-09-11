@@ -7,6 +7,7 @@ const review: ReviewDocument = {
     {
       anchor: 'entity:ParkingFloor',
       title: 'ParkingFloor (class)',
+      titleByLearner: true,
       text: 'Responsibility: Owns its spots and assigns them atomically to arriving vehicles.',
     },
     {
@@ -58,6 +59,72 @@ describe('verifyEvidence', () => {
     );
 
     expect(result?.verified).toBe(false);
+  });
+
+  test('drops a quote that is only a section heading, since headings are not the learner’s words', () => {
+    const results = verifyEvidence(
+      [
+        { quote: '[decision:1] Decision 1', location: 'decision:1' },
+        { quote: 'Decision 1', location: 'decision:1' },
+        { quote: 'Pricing changes often and should be swappable.', location: 'decision:1' },
+      ],
+      review,
+    );
+
+    expect(results.map((r) => r.quote)).toEqual(['Pricing changes often and should be swappable.']);
+  });
+
+  test('verifies a quote that runs on from one of our headings into the learner’s text', () => {
+    const results = verifyEvidence(
+      [
+        { quote: '[decision:1] Decision 1 Decision: PricingStrategy interface', location: 'decision:1' },
+        {
+          quote: '[entity:ParkingFloor] ParkingFloor (class) Responsibility: Owns its spots and assigns them atomically',
+          location: 'entity:ParkingFloor',
+        },
+      ],
+      review,
+    );
+
+    expect(results.map((r) => r.verified)).toEqual([true, true]);
+  });
+
+  test('counts an entity’s name and kind as the learner’s words, because the learner chose them', () => {
+    const results = verifyEvidence(
+      [
+        { quote: 'ParkingFloor (class)', location: 'entity:ParkingFloor' },
+        { quote: '[entity:ParkingFloor] ParkingFloor (class)', location: 'entity:ParkingFloor' },
+      ],
+      review,
+    );
+
+    expect(results.map((r) => r.verified)).toEqual([true, true]);
+  });
+
+  test('does not accept the problem’s own requirement text, shown in a heading, as the learner’s evidence', () => {
+    const withMapping: ReviewDocument = {
+      sections: [
+        {
+          anchor: 'mapping:R7',
+          title: 'R7: Several gates operate at the same time, and a spot must never be assigned to two vehicles.',
+          text: 'ParkingFloor.tryReserve runs under a per-floor lock.',
+        },
+      ],
+    };
+
+    const results = verifyEvidence(
+      [
+        { quote: 'Several gates operate at the same time, and a spot must never be assigned to two vehicles', location: 'mapping:R7' },
+        { quote: 'ParkingFloor.tryReserve runs under a per-floor lock', location: 'mapping:R7' },
+        {
+          quote: 'R7: Several gates operate at the same time, and a spot must never be assigned to two vehicles. ParkingFloor.tryReserve runs under a per-floor lock',
+          location: 'mapping:R7',
+        },
+      ],
+      withMapping,
+    );
+
+    expect(results.map((r) => r.verified)).toEqual([false, true, true]);
   });
 
   test('never verifies an empty or trivially short quote', () => {

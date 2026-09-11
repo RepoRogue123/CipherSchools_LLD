@@ -83,6 +83,7 @@ export class StructuredDesignFormatV1 implements DesignFormat<DesignDocument> {
       sections.push({
         anchor: `entity:${name}`,
         title: `${name} (${entity.kind})`,
+        titleByLearner: true,
         text: [
           `Responsibility: ${entity.responsibility || EMPTY}`,
           `Attributes: ${entity.attributes.length ? entity.attributes.join('; ') : 'none'}`,

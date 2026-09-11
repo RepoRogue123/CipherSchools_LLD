@@ -44,7 +44,10 @@ export interface DesignModel {
 export interface ReviewSection {
   anchor: string;
   title: string;
+  /** What the learner wrote for this section. */
   text: string;
+  /** Set when the learner wrote the title too (an entity's name and kind); other titles are ours. */
+  titleByLearner?: boolean;
 }
 
 export interface ReviewDocument {

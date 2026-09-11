@@ -286,6 +286,43 @@ A cap only ever lowers a score. The report shows the reviewer's original score a
 
 The deterministic half is already covered by tests (`calibration-fixtures.test.ts`): the strong design clears every gate and cap, and the weak design is capped on requirements, robustness and trade-offs.
 
+**Results from a live run** (11 September 2026, Gemini free tier, `gemini-3.5-flash`, 3 runs per design):
+
+| Design | Mean per run | Band | Quotes verified |
+|---|---|---|---|
+| Strong | 4.00, 4.00, 4.00 | Strong | 16/16 in every run |
+| Weak | 1.38, 1.50, 1.38 | Foundational | 11/11, 10/10, 10/10 |
+
+| Criterion | Strong runs | Weak runs |
+|---|---|---|
+| Requirement understanding | 4 4 4 | 1 1 1 |
+| Class responsibilities | 4 4 4 | 1 1 1 |
+| Coupling & cohesion | 4 4 4 | 2 2 2 |
+| Encapsulation & interfaces | 4 4 4 | 2 2 2 |
+| Abstraction & patterns | 4 4 4 | 1 1 1 |
+| Extensibility | 4 4 4 | 1 2 1 |
+| Edge cases & testability | 4 4 4 | 1 1 1 |
+| Explanation & trade-offs | 4 4 4 | 2 2 2 |
+
+- **Separation:** every strong run outscored every weak run, by an average of 2.58 levels.
+- **Consistency:** across repeated runs of the same design, 15 of the 16 criterion rows never moved. The one change was a single level (extensibility on the weak design).
+- **Evidence:** every quote matched the submission in these runs.
+- **Earlier run on `gemini-3.6-flash`:** before its free daily quota ran out, the strong design scored 3.88–4.00 across five runs and the weak design 1.00 in its one run. In one run the verifier flagged 1 of 21 quotes as not present in the submission, and it was shown as such.
+
+**The full loop in the browser, with real AI review:**
+
+- **Attempt 1, the weak design:** 1.13 (Foundational). The reviewer named the god class and suggested extracting `Ticket`, a fee calculator and `Floor`.
+- **Attempt 2, the strong design:** reached through "Revise this design" and facing the reservations curveball, it scored 3.88 (Strong). Extensibility got 3 rather than 4, with a concrete suggestion for absorbing reservations with fewer edits.
+- **Comparison:** "Since attempt #1" showed +2.75, every criterion improved, and 7 structural findings resolved.
+- **Fallback:** `gemini-3.6-flash` had spent its daily quota, so the chain moved on and `gemini-3.5-flash` did both reviews.
+
+**What live testing changed:**
+
+- **A retired model.** Google had retired the original default model (`gemini-2.5-flash`) for new keys, so `*_MODEL` now accepts a list and the default chain ends with the `gemini-flash-latest` alias.
+- **Invalid keys return 400.** Gemini rejects a bad key with HTTP 400, not 401, so that response is now classified as an auth failure.
+- **Busy spells.** Free tiers return 503 "high demand" in bursts, which confirmed the need for backoff and fallback.
+- **Per-model quotas.** Quotas apply per model, so chaining models on one key multiplies free capacity. A daily-quota 429 now pauses that model for an hour instead of the few seconds the provider suggests.
+
 ## 7. Failure handling and idempotency
 
 | Situation | What happens |

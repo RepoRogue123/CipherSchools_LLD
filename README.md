@@ -11,6 +11,30 @@ Most LLD practice ends by comparing your design with a reference solution. That 
 
 The research behind these choices is in [docs/RESEARCH.md](docs/RESEARCH.md); the design, domain model and trade-offs are in [docs/DESIGN.md](docs/DESIGN.md).
 
+## Screenshots
+
+These are from a real run: two attempts at Parking Lot, both reviewed live by Gemini on the free tier.
+
+**The review.** The band is computed from eight rubric levels, not an AI score out of 100. The next moves carry into the next attempt, and "Since attempt #1" shows what improved.
+
+![Feedback report](docs/screenshots/feedback.png)
+
+**Evidence-linked criteria.** Highlighted text is quoted from the learner's own design and checked against it before it is shown.
+
+![Criterion feedback with verified quotes](docs/screenshots/feedback-criteria.png)
+
+**The workspace.** On the left, the brief and the focus goals carried over from the last review. On the right, the structured design document with live structure checks.
+
+![Design workspace](docs/screenshots/workspace.png)
+
+**The curveball.** Once revealed, the core design locks, and the learner explains which classes the change modifies and which it adds.
+
+![Curveball and change impact](docs/screenshots/curveball.png)
+
+**Progress.** Attempt history and scores by criterion.
+
+![Attempt history and heat table](docs/screenshots/progress.png)
+
 ## Run it
 
 Requires **Node.js 22.13 or newer** (for the built-in `node:sqlite`). There are no native dependencies, database server or Docker.
@@ -47,7 +71,15 @@ npm run smoke:llm                     # one structured call per configured provi
 npm run smoke:llm -- --list-models    # also list the model ids your key can use
 ```
 
-Model ids change often. Override them with `GEMINI_MODEL`, `GROQ_MODEL` or `OPENROUTER_MODEL` if a default is retired.
+Model ids change often: Google retired `gemini-2.5-flash` for new keys during development. Override the defaults with `GEMINI_MODEL`, `GROQ_MODEL` or `OPENROUTER_MODEL`.
+
+Free-tier quotas are **per model**, so each of these variables accepts a comma-separated list, and every model becomes its own step in the fallback chain. For example:
+
+```bash
+GEMINI_MODEL=gemini-3.6-flash,gemini-3.5-flash,gemini-flash-latest
+```
+
+A model whose daily quota is used up is skipped for an hour, and the next one takes over.
 
 ## A five-minute tour
 

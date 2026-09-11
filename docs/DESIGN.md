@@ -8,7 +8,7 @@ The curveball is the product's central idea. When the learner finishes their des
 
 Contents:
 
-1. [MVP scope](#1-mvp-scope)
+1. [MVP scope and user flow](#1-mvp-scope)
 2. [Architecture](#2-architecture)
 3. [The submission format](#3-the-submission-format)
 4. [Domain model](#4-domain-model)
@@ -33,6 +33,25 @@ Each step of the practice loop maps to one feature. Anything that did not improv
 | Get feedback | Each rubric criterion is scored 1–4 with the level's name, highlighted quotes from the learner's own design, a concern, a suggestion and a confidence. Automated caps show their reason. Also shown: the top three next moves, what reviewers look for in the problem, and alternative designs with their trade-offs. |
 | Review | Comparison with the previous attempt, and a criterion-by-attempt history table. |
 | Try again | "Revise this design" (seeded with the submitted design) or "Start fresh". The previous next moves are pinned as focus goals, and the other curveball is used. |
+
+### User flow
+
+```mermaid
+flowchart TD
+  A[Choose a problem<br/>rubric visible up front] --> B[Read the brief<br/>open clarifying answers]
+  B --> C[Design in sections<br/>structure checks on every autosave]
+  C -->|blockers remain| C
+  C -->|no blockers| D[Reveal the curveball<br/>core design locks]
+  D --> E[Explain the change impact<br/>classes edited vs added]
+  E -->|no blockers| F[Submit<br/>202, stored before review]
+  F --> G[Evaluating in the background<br/>checks, then AI review]
+  G -->|all steps done| H[Feedback ready<br/>scored criteria with quotes]
+  G -->|AI unavailable after retries| I[Review incomplete<br/>automated feedback + Retry]
+  I -->|learner retries| G
+  H --> J[Review<br/>comparison, history, recurring gaps]
+  J -->|Revise this design / Start fresh| K[Next attempt<br/>focus goals pinned, other curveball]
+  K --> C
+```
 
 **Deliberately out of scope:** authentication (a name-only profile identifies the learner), code or diagram input, a human-review UI, content authoring, gamification, and any distributed infrastructure.
 

@@ -2,6 +2,7 @@ import type { ProblemSummaryDto } from '@designloop/shared';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { api } from '../api/client';
+import { InlineText } from '../components/InlineText';
 import { ErrorState, Loading } from '../components/States';
 import { bandTone, toneText } from '../lib/format';
 
@@ -62,7 +63,9 @@ export function HomePage() {
                     (weak in {area.weakCount} of {area.assessedCount} reviews)
                   </span>
                 </p>
-                <p className="text-sm">Latest advice: {area.latestSuggestion}</p>
+                <p className="text-sm">
+                  Latest advice: <InlineText text={area.latestSuggestion} />
+                </p>
               </li>
             ))}
           </ul>

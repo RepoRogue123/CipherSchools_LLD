@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { api } from '../api/client';
 import { ChecksPanel } from '../components/ChecksPanel';
 import { CriterionCard } from '../components/CriterionCard';
+import { InlineText } from '../components/InlineText';
 import { ErrorState, Loading } from '../components/States';
 import { StatusStepper } from '../components/StatusStepper';
 import { TitleBlock } from '../components/TitleBlock';
@@ -124,13 +125,19 @@ function Report({
           ) : (
             <p className="text-2xl font-semibold [font-stretch:112%]">Automated checks only</p>
           )}
-          {report.summary && <p className="mt-4 text-lg">{report.summary}</p>}
+          {report.summary && (
+            <p className="mt-4 text-lg">
+              <InlineText text={report.summary} />
+            </p>
+          )}
           {report.strengths.length > 0 && (
             <div className="mt-5">
               <h2 className="text-base">What worked</h2>
               <ul className="mt-2 list-disc space-y-1 pl-5">
                 {report.strengths.map((s) => (
-                  <li key={s}>{s}</li>
+                  <li key={s}>
+                    <InlineText text={s} />
+                  </li>
                 ))}
               </ul>
             </div>
@@ -144,7 +151,7 @@ function Report({
                 <li key={`${step.criterionId}-${index}`} className="flex gap-3">
                   <span className="text-lg font-semibold text-cobalt [font-stretch:112%]">{index + 1}</span>
                   <span>
-                    {step.text}
+                    <InlineText text={step.text} />
                     <span className="label ml-2">{step.criterionName}</span>
                   </span>
                 </li>

@@ -1,4 +1,5 @@
 import type { AssessmentSource, CriterionFeedback } from '@designloop/shared';
+import { InlineText } from './InlineText';
 import { ScoreGauge } from './ScoreGauge';
 
 const SOURCE_LABEL: Record<AssessmentSource, string> = {
@@ -40,17 +41,21 @@ export function CriterionCard({ criterion }: { criterion: CriterionFeedback }) {
               ))}
             </ul>
           )}
-          {criterion.reasoning && <p className="text-ink-soft">{criterion.reasoning}</p>}
+          {criterion.reasoning && (
+            <p className="text-ink-soft">
+              <InlineText text={criterion.reasoning} />
+            </p>
+          )}
           {criterion.concern && (
             <p className="border-l-2 border-pencil pl-3">
               <span className="label mr-2 text-pencil">Concern</span>
-              {criterion.concern}
+              <InlineText text={criterion.concern} />
             </p>
           )}
           {criterion.suggestion && (
             <p className="border-l-2 border-cobalt pl-3">
               <span className="label mr-2 text-cobalt">Try next</span>
-              {criterion.suggestion}
+              <InlineText text={criterion.suggestion} />
             </p>
           )}
           <p className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-ink-soft">
